@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Banco NX - Prototipo Local</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #121212; color: #eee; padding: 20px; }
+    input, button { padding: 5px; margin: 5px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #555; padding: 5px; }
+    .admin { background: #333; padding: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<h1>Banco NX - Prototipo Local</h1>
+
+<h2>Crear Cuenta</h2>
+<input type="text" id="newUser" placeholder="Usuario">
+<input type="password" id="newPass" placeholder="Contraseña">
+<button onclick="crearCuenta()">Crear Cuenta</button>
+
+<h2>Iniciar Sesión</h2>
+<input type="text" id="loginUser" placeholder="Usuario">
+<input type="password" id="loginPass" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
+
+<div id="userPanel" style="display:none; margin-top:20px;">
+  <h2>Panel Usuario</h2>
+  <p>Saldo NX$: <span id="saldo">0</span></p>
+</div>
+
+<div id="adminPanel" class="admin" style="display:none;">
+  <h2>Panel Admin</h2>
+  <p>Tu saldo NX$: ∞</p>
+
+  <h3>Gestionar Cuentas</h3>
+  <input type="text" id="targetUser" placeholder="Usuario objetivo">
+  <input type="number" id="nxAmount" placeholder="Cantidad NX$">
+  <button onclick="darNX()">Dar NX$</button>
+  <button onclick="quitarNX()">Quitar NX$</button>
+  <button onclick="banearUsuario()">Banear Usuario</button>
+  <button onclick="eliminarUsuario()">Eliminar Usuario</button>
+
+  <h3>Ver todas las cuentas</h3>
+  <button onclick="mostrarCuentas()">Mostrar Cuentas y Contraseñas</button>
+  <table id="cuentasTable">
+    <tr><th>Usuario</th><th>Contraseña</th><th>Saldo NX$</th><th>Estado</th></tr>
+  </table>
+</div>
+
+<script>
+// Base de datos local
+let cuentas = {};
+const adminUser = 'admin';
+const adminPass = 'admin123';
+
+// Crear cuenta
+function crearCuenta(){
+  const user = document.getElementById('newUser').value;
+  const pass = document.getElementById('newPass').value;
+  if(user in cuentas){ alert('Usuario ya existe'); return; }
+  cuentas[user] = {password: pass, saldo: 0, estado: 'activo'};
+  alert('Cuenta creada');
+}
+
+// Login
+function login(){
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+
+  if(user === adminUser && pass === adminPass){
+    document.getElementById('adminPanel').style.display='block';
+    document.getElementById('userPanel').style.display='none';
+  } else if(user in cuentas && cuentas[user].password === pass){
+    if(cuentas[user].estado !== 'activo'){ alert('Cuenta baneada o eliminada'); return; }
+    document.getElementById('userPanel').style.display='block';
+    document.getElementById('saldo').innerText = cuentas[user].saldo;
+    document.getElementById('adminPanel').style.display='none';
+  } else { alert('Usuario o contraseña incorrectos'); }
+}
+
+// Admin funciones
+function darNX(){
+  const user = document.getElementById('targetUser').value;
+  const nx = parseInt(document.getElementById('nxAmount').value);
+  if(user in cuentas && cuentas[user].estado==='activo'){
+    cuentas[user].saldo += nx;
+    alert(`Se dieron ${nx} NX$ a ${user}`);
+  } else { alert('Usuario no existe o está baneado'); }
+}
+
+function quitarNX(){
+  const user = document.getElementById('targetUser').value;
+  const nx = parseInt(document.getElementById('nxAmount').value);
+  if(user in cuentas && cuentas[user].estado==='activo'){
+    cuentas[user].saldo -= nx;
+    if(cuentas[user].saldo<0) cuentas[user].saldo=0;
+    alert(`Se quitaron ${nx} NX$ a ${user}`);
+  } else { alert('Usuario no existe o está baneado'); }
+}
+
+function banearUsuario(){
+  const user = document.getElementById('targetUser').value;
+  if(user in cuentas){
+    cuentas[user].estado='baneado';
+    alert(`${user} fue baneado`);
+  } else { alert('Usuario no existe'); }
+}
+
+function eliminarUsuario(){
+  const user = document.getElementById('targetUser').value;
+  if(user in cuentas){
+    delete cuentas[user];
+    alert(`${user} eliminado`);
+  } else { alert('Usuario no existe'); }
+}
+
+function mostrarCuentas(){
+  const table = document.getElementById('cuentasTable');
+  table.innerHTML = '<tr><th>Usuario</th><th>Contraseña</th><th>Saldo NX$</th><th>Estado</th></tr>';
+  for(let user in cuentas){
+    let row = table.insertRow();
+    row.insertCell(0).innerText = user;
+    row.insertCell(1).innerText = cuentas[user].password;
+    row.insertCell(2).innerText = cuentas[user].saldo;
+    row.insertCell(3).innerText = cuentas[user].estado;
+  }
+}
+</script>
+
+</body>
+</html>
